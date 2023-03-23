@@ -1,29 +1,36 @@
 import firebase from 'firebase/app';
-import { auth, database } from '../misc/firebase';
-import { Button, Col, Container, Grid, Icon, Panel, Alert } from 'rsuite';
+import {
+  Col,
+  Container,
+  Grid,
+  Button,
+  ButtonToolbar,
+  Panel,
+  Loader,
+} from 'rsuite';
+import GearIcon from '@rsuite/icons/Gear';
+import { useProfile } from '../context/profile-context';
+import { signUserIn } from '../helpers/auth';
 
 const SignIn = () => {
-  const signIn = async (provider) => {
-    try {
-      const { additionalUserInfo, user } = await auth.signInWithPopup(provider);
+  const { profile, isLoading, navigate } = useProfile();
 
-      if (additionalUserInfo.isNewUser) {
-        await database.ref(`/profiles/${user.uid}`).set({
-          name: user.displayName,
-          createdAt: firebase.database.ServerValue.TIMESTAMP,
-        });
-      }
+  if (!profile && isLoading) {
+    return (
+      <Container>
+        <Loader center vertical size="md" content="Loading" speed="slow" />
+      </Container>
+    );
+  }
 
-      Alert.success('Signed in', 4000);
-    } catch (err) {
-      Alert.error(err.message, 4000);
-    }
+  if (profile && !isLoading) {
+    return navigate('/');
   }
 
   const signInWith = service => {
     switch (service) {
       case 'google':
-        signIn(new firebase.auth.GoogleAuthProvider());
+        signUserIn(new firebase.auth.GoogleAuthProvider());
         break;
       default:
         return new Error('Invalid service: ' + service);
@@ -39,11 +46,16 @@ const SignIn = () => {
               <h2>Welcome to Chat</h2>
               <p>Progressive chat platform neophytes</p>
             </div>
-            <div className='mt-3'>
-              <Button block color="green" onClick={signInWith('google')}>
-                <Icon icon="google" /> Continue with Google
+            <ButtonToolbar className="mt-3">
+              <Button
+                block
+                appearance="primary"
+                color="green"
+                onClick={() => signInWith('google')}
+              >
+                <GearIcon icon="google" /> Continue with Google
               </Button>
-            </div>
+            </ButtonToolbar>
           </Panel>
         </Col>
       </Grid>

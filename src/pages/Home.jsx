@@ -1,13 +1,22 @@
-import { Navigate } from 'react-router-dom';
+import { Container, Loader } from 'rsuite';
+import { useProfile } from '../context/profile-context';
 
 const Home = () => {
-  const profile = false;
+  const { profile, isLoading, navigate } = useProfile();
 
-  if (!profile) return <Navigate to="/sign-in" replace={true} />
+  if (!profile && isLoading) {
+    return (
+      <Container>
+        <Loader center vertical size="md" content="Loading" speed="slow" />
+      </Container>
+    );
+  }
 
-  return (
-    <div>Home</div>
-  )
-}
+  if (!profile && !isLoading) {
+    return navigate('/sign-in');
+  }
 
-export default Home
+  return <div>Home</div>;
+};
+
+export default Home;
