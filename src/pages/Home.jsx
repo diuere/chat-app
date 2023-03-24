@@ -1,4 +1,5 @@
-import { Container, Loader } from 'rsuite';
+import { Col, Container, Grid, Loader, Row } from 'rsuite';
+import Sidebar from '../components/Sidebar';
 import { useProfile } from '../context/profile-context';
 
 const Home = () => {
@@ -16,7 +17,15 @@ const Home = () => {
     return navigate('/sign-in');
   }
 
-  return <div>Home</div>;
+  return (
+    <Grid fluid className='h-100'>
+      <Row>
+        <Col xs={24} md={8} >
+          <Sidebar />
+        </Col>
+      </Row>
+    </Grid>
+  );
 };
 
 export default Home;
