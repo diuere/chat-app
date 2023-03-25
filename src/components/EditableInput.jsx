@@ -30,10 +30,10 @@ const EditableInput = ({
         <Notification type="info" header="info">{emptyMsg}</Notification>,
         { placement: 'topStart', duration: 4000 }
       );
+    }
 
-      if(trimmed !== defaultValue) {
-        await onSave(trimmed)
-      }
+    if(trimmed !== defaultValue) {
+      await onSave(trimmed)
     }
   }
 
