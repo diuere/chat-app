@@ -13,7 +13,7 @@ const DashboardToggle = () => {
     auth.signOut();
 
     toaster.push(
-      <Notification type="info" header="info" />,
+      <Notification type="info" header="info">You were signed out</Notification>,
       { placement: 'topStart', duration: 4000 }
     );
     
