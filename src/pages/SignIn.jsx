@@ -33,7 +33,7 @@ const SignIn = () => {
         signUserIn(new firebase.auth.GoogleAuthProvider());
         break;
       default:
-        return new Error('Invalid service: ' + service);
+        throw new Error('Invalid service: ' + service);
     }
   };
 
