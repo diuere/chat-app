@@ -1,6 +1,6 @@
 import firebase from 'firebase/app';
-import { toaster, Notification } from 'rsuite';
 import { auth, database } from '../misc/firebase';
+import { toggleToasterPush } from './custom-hooks';
 
 export const signUserIn = async provider => {
   try {
@@ -13,48 +13,24 @@ export const signUserIn = async provider => {
       });
     }
 
-    toaster.push(<Notification type="success" header="success" />, {
-      placement: 'topStart',
-      duration: 4000,
-    });
-  } catch (err) {
-    toaster.push(
-      <Notification type="error" header="error">
-        {err.message}
-      </Notification>,
-      { placement: 'topStart', duration: 4000 }
-    );
+    toggleToasterPush('success', 'Success', ``, 'topStart', 4000);
+  } catch (error) {
+    toggleToasterPush('error', 'Error', `${error.message}`, 'topStart', 4000);
   }
 };
 
 export const handleUnlinking = async (provider, updateState) => {
   try {
     if (auth.currentUser.providerData.length === 1)
-      throw new Error(`You cannot disconnect from ${provider}`);
-
+    throw new Error(`You cannot disconnect from ${provider}`);
+    
     await auth.currentUser.unlink(provider);
-
+    
     updateState(provider, false);
-
-    toaster.push(
-      <Notification type="info" header="Info">
-        Disconnected from ${provider}
-      </Notification>,
-      {
-        placement: 'topStart',
-        duration: 4000,
-      }
-    );
+    
+    toggleToasterPush('info', 'Info', `Disconnected from ${provider}` , 'topStart', 4000);
   } catch (error) {
-    toaster.push(
-      <Notification type="error" header="error">
-        {error.message}
-      </Notification>,
-      {
-        placement: 'topStart',
-        duration: 4000,
-      }
-    );
+    toggleToasterPush('error', 'Error', `${error.message}`, 'topStart', 4000);
   }
 };
 
@@ -64,26 +40,8 @@ export const handleLinking = async (provider, updateState) => {
 
     updateState(provider.providerId, true);
 
-    toaster.push(
-      <Notification type="info" header="Info">
-        Connected to ${provider.providerId}
-      </Notification>,
-      {
-        placement: 'topStart',
-        duration: 4000,
-      }
-    );
+    toggleToasterPush('info', 'Info', `Connected to ${provider.providerId}` , 'topStart', 4000);
   } catch (error) {
-    toaster.push(
-      <Notification type="error" header="error">
-        {error.message}
-      </Notification>,
-      {
-        placement: 'topStart',
-        duration: 4000,
-      }
-    );
+    toggleToasterPush('error', 'Error', `${error.message}`, 'topStart', 4000);
   }
-}
-
-
+};

@@ -3,6 +3,7 @@ import { Input, InputGroup, Notification, toaster } from 'rsuite';
 import CloseIcon from '@rsuite/icons/Close';
 import EditIcon from '@rsuite/icons/Edit';
 import CheckIcon from '@rsuite/icons/Check';
+import { toggleToasterPush } from '../helpers/custom-hooks';
 
 const EditableInput = ({
   defaultValue,
@@ -26,10 +27,7 @@ const EditableInput = ({
     const trimmed = inputValue.trim();
 
     if(trimmed === '') {
-      toaster.push(
-        <Notification type="info" header="info">{emptyMsg}</Notification>,
-        { placement: 'topStart', duration: 4000 }
-      );
+      toggleToasterPush('info', 'Info', `${emptyMsg}`, 'topStart', 4000);
     }
 
     if(trimmed !== defaultValue) {

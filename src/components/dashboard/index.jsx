@@ -1,5 +1,6 @@
 import { Button, Divider, Drawer, Notification, toaster } from 'rsuite';
 import { useProfile } from '../../context/profile-context';
+import { toggleToasterPush } from '../../helpers/custom-hooks';
 import { database } from '../../misc/firebase';
 import EditableInput from '../EditableInput';
 import ProviderBlock from './ProviderBlock';
@@ -13,15 +14,9 @@ const DashboardIndex = ({ onSignOut }) => {
     try {
       await userNicknameRef.set(newData);
 
-      toaster.push(
-        <Notification type="success" header="Success">User nickname has been updated</Notification>,
-        { placement: 'topStart', duration: 4000 }
-      )
-    } catch (err) {
-      toaster.push(
-        <Notification type="error" header="Error">{err.message}</Notification>,
-        { placement: 'topStart', duration: 4000 }
-      )
+      toggleToasterPush('success', 'Success', `User nickname has been updated`, 'topStart', 4000);
+    } catch (error) {
+      toggleToasterPush('error', 'Error', `${error.message}`, 'topStart', 4000);
     }
   };
 

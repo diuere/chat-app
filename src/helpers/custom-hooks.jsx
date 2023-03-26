@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { Notification, toaster } from "rsuite";
 
 
 export const useModalState = (defaultVal = false) => {
@@ -26,4 +27,16 @@ export const useMediaQuery = (query) => {
   }, [query])
 
   return matches;
+}
+
+export const toggleToasterPush = (type, header, message = "", placement, duration) => {
+  toaster.push(
+    <Notification type={type} header={header}>
+      {message}
+    </Notification>,
+    {
+      placement: placement,
+      duration: duration,
+    }
+  );
 }
