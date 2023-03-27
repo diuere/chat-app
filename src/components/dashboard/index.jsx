@@ -3,6 +3,7 @@ import { useProfile } from '../../context/profile-context';
 import { toggleToasterPush } from '../../helpers/custom-hooks';
 import { database } from '../../misc/firebase';
 import EditableInput from '../EditableInput';
+import AvatarUploadBtn from './AvatarUploadBtn';
 import ProviderBlock from './ProviderBlock';
 
 const DashboardIndex = ({ onSignOut }) => {
@@ -41,6 +42,7 @@ const DashboardIndex = ({ onSignOut }) => {
           onSave={onSave}
           label={<h6 className="mb-2">Nickname</h6>}
         />
+        <AvatarUploadBtn />
       </Drawer.Body>
     </>
   );
