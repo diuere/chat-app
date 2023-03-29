@@ -1,5 +1,6 @@
+import React from 'react';
 import { useCallback, useRef, useState } from 'react';
-import { Button, Form, Modal } from 'rsuite';
+import { Button, Form, Input, Modal } from 'rsuite';
 import FormGroup from 'rsuite/esm/FormGroup';
 import FormControl from 'rsuite/esm/FormControl';
 import CreativeIcon from '@rsuite/icons/Creative';
@@ -7,6 +8,10 @@ import { SchemaModel, StringType } from 'schema-typed';
 import firebase from 'firebase/app';
 import { database } from "../misc/firebase"
 import { toggleToasterPush, useModalState } from '../helpers/custom-hooks';
+
+const Textarea = React.forwardRef((props, ref) => <Input {...props} as="textarea" ref={ref} />);
+
+Textarea.displayName = 'textarea';
 
 // validating the form submission with rsuite
 const model = SchemaModel({
@@ -80,7 +85,7 @@ const CreateRoomBtnModal = () => {
             <FormGroup>
               <Form.ControlLabel>Description</Form.ControlLabel>
               <FormControl
-                componentClass="textarea"
+                accepter={Textarea}
                 rows={5}
                 name="description"
                 placeholder="Enter room description..."
