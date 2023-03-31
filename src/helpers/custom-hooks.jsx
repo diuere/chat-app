@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Notification, toaster } from 'rsuite';
+import { database } from '../misc/firebase';
 
 export const useModalState = (defaultVal = false) => {
   // shall determine the dashboard brawer open state
@@ -58,4 +59,26 @@ export const toggleToasterPush = (
       duration: duration,
     }
   );
+};
+
+export const usePresence = uid => {
+  // shall return the info abt the presence status of a certain user
+  const [presence, setPresence] = useState(null);
+
+  useEffect(() => {
+    const userStatusRef = database.ref(`/status/${uid}`);
+
+    userStatusRef.on('value', snap => {
+      if (snap.exists()) {
+        const data = snap.val();
+        setPresence(data);
+      }
+    });
+
+    return () => {
+      userStatusRef.off();
+    };
+  }, [uid]);
+
+  return presence;
 };
