@@ -17,7 +17,8 @@
     "react-timeago": "^7.1.0",
     "rsuite": "^5.28.3",
     "sass": "^1.57.1",
-    "schema-typed": "^2.1.2"
+    "schema-typed": "^2.1.2",
+    "use-context-selector": "^1.4.1"
   },
   "devDependencies": {
     "@iconify/react": "^4.1.0",

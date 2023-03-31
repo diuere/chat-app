@@ -1,6 +1,7 @@
-import { Button, Divider, Drawer, Notification, toaster } from 'rsuite';
+import { Button, Divider, Drawer } from 'rsuite';
 import { useProfile } from '../../context/profile-context';
 import { toggleToasterPush } from '../../helpers/custom-hooks';
+import { getUserUpdates } from '../../helpers/utils';
 import { database } from '../../misc/firebase';
 import EditableInput from '../EditableInput';
 import AvatarUploadBtn from './AvatarUploadBtn';
@@ -9,11 +10,12 @@ import ProviderBlock from './ProviderBlock';
 const DashboardIndex = ({ onSignOut }) => {
   const { profile } = useProfile();
 
-  const onSave = async (newData) => {
-    const userNicknameRef = database.ref(`/profiles/${profile.uid}`).child("name");
-
+  const onSave = async newData => {
     try {
-      await userNicknameRef.set(newData);
+      // updating profile user name
+      await getUserUpdates(profile.uid, 'name', newData, database).then(
+        updates => database.ref().update(updates)
+      );
 
       toggleToasterPush('success', 'Success', `User nickname has been updated`, 'topStart', 4000);
     } catch (error) {
@@ -36,7 +38,7 @@ const DashboardIndex = ({ onSignOut }) => {
         <h3>Hey, {profile.name}</h3>
         <ProviderBlock />
         <Divider />
-        <EditableInput 
+        <EditableInput
           name="nickname"
           defaultValue={profile.name}
           onSave={onSave}

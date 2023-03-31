@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useState } from "react"
-import { Notification, toaster } from "rsuite";
-
+import { useCallback, useEffect, useState } from 'react';
+import { Notification, toaster } from 'rsuite';
 
 export const useModalState = (defaultVal = false) => {
   // shall determine the dashboard brawer open state
@@ -10,26 +9,46 @@ export const useModalState = (defaultVal = false) => {
   const close = useCallback(() => setIsOpen(false), []);
 
   return { isOpen, open, close };
-}
+};
 
-export const useMediaQuery = (query) => {
-  // shall allow the manipulation of media queries programmatically
+export const useMediaQuery = query => {
+  // this hook shall allow the manipulation of media queries programmatically
+
+  const getMatches = query => {
+    // Prevents SSR issues
+    if (typeof window !== 'undefined') {
+      return window.matchMedia(query).matches;
+    }
+    return false;
+  };
+
   const [matches, setMatches] = useState(false);
+
+  const handleChange = useCallback(
+    () => setMatches(getMatches(query)),
+    [query]
+  );
 
   useEffect(() => {
     const queryList = window.matchMedia(query);
 
-    const handleChange = e => setMatches(e.matches)
+    handleChange(); // shall be trigged on first client-side load or if query changes
 
-    queryList.addEventListener("change", handleChange);
+    queryList.addEventListener('change', handleChange);
 
-    return () => queryList.removeEventListener("change", handleChange);
-  }, [query])
+    return () => queryList.removeEventListener('change', handleChange);
+  }, [query, handleChange]);
 
   return matches;
-}
+};
 
-export const toggleToasterPush = (type, header, message = "", placement, duration) => {
+export const toggleToasterPush = (
+  type,
+  header,
+  message = '',
+  placement,
+  duration
+) => {
   toaster.push(
     <Notification type={type} header={header}>
       {message}
@@ -39,4 +58,4 @@ export const toggleToasterPush = (type, header, message = "", placement, duratio
       duration: duration,
     }
   );
-}
+};

@@ -5,6 +5,7 @@ import { toggleToasterPush, useModalState } from '../../helpers/custom-hooks';
 import { useProfile } from '../../context/profile-context';
 import { database, storage } from '../../misc/firebase';
 import ProfileAvatar from './ProfileAvatar';
+import { getUserUpdates } from '../../helpers/utils';
 
 const fileInputTypes = '.png, .jpeg, .jpg'; // files types for the html input property
 
@@ -39,11 +40,17 @@ const AvatarUploadBtn = () => {
       // selecting only one file
       const file = allFiles[0];
 
-      if ( isValidFile(file.type) ) {
+      if (isValidFile(file.type)) {
         setUserImg(file);
         open();
       } else {
-        toggleToasterPush('warning', 'Warning', `Invalid file type of ${file.type}`, 'topCenter', 4000);
+        toggleToasterPush(
+          'warning',
+          'Warning',
+          `Invalid file type of ${file.type}`,
+          'topCenter',
+          4000
+        );
       }
     }
   };
@@ -53,17 +60,18 @@ const AvatarUploadBtn = () => {
     setIsLoading(true);
     try {
       const blob = await getBlob(canvas);
-      const avatarRef = storage.ref(`/profiles/${profile.uid}`).child("avatar");
+      const avatarRef = storage.ref(`/profiles/${profile.uid}`).child('avatar');
 
       // upload avatar to storage
-      const uploadAvatarResult = await avatarRef.put( blob, {
-        cacheControl: `public, max-age=${3600 * 24 * 3}`
+      const uploadAvatarResult = await avatarRef.put(blob, {
+        cacheControl: `public, max-age=${3600 * 24 * 3}`,
       });
       const downloadUrl = await uploadAvatarResult.ref.getDownloadURL(); // getting the file download url
 
       // setting avatar to the database
-      const userAvatarRef = database.ref(`/profiles/${profile.uid}`).child("avatar"); 
-      await userAvatarRef.set(downloadUrl);
+      await getUserUpdates(profile.uid, 'avatar', downloadUrl, database).then(
+        updates => database.ref().update(updates)
+      );
 
       toggleToasterPush("info", "Info", `Avatar has been successfully uploaded`, 'topStart', 4000);
       setIsLoading(false);
@@ -72,11 +80,14 @@ const AvatarUploadBtn = () => {
       setIsLoading(false);
     }
   };
-  console.log(profile)
 
   return (
     <div className="mt-3 text-center">
-      <ProfileAvatar name={profile.name} src={profile.avatar} className="width-200 height-200 img-fullsize font-huge"/>
+      <ProfileAvatar
+        name={profile.name}
+        src={profile.avatar}
+        className="width-200 height-200 img-fullsize font-huge"
+      />
 
       <div>
         <label htmlFor="avatar-upload" className="d-bock cursor-pointer padded">
@@ -110,10 +121,10 @@ const AvatarUploadBtn = () => {
             </div>
           </Modal.Body>
           <Modal.Footer>
-            <Button 
-              block 
-              appearance="primary" 
-              onClick={onUploadClick} 
+            <Button
+              block
+              appearance="primary"
+              onClick={onUploadClick}
               disabled={isLoading}
             >
               Upload new avatar
