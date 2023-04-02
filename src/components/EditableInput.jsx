@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Input, InputGroup, Notification, toaster } from 'rsuite';
+import { Input, InputGroup } from 'rsuite';
 import CloseIcon from '@rsuite/icons/Close';
 import EditIcon from '@rsuite/icons/Edit';
 import CheckIcon from '@rsuite/icons/Check';
@@ -11,6 +11,7 @@ const EditableInput = ({
   label = null,
   placeholder = 'Write your value',
   emptyMsg = 'Input is empty',
+  wrapperClassName="",
   ...inputProps
 }) => {
   const [inputValue, setInputValue] = useState(defaultValue);
@@ -36,7 +37,7 @@ const EditableInput = ({
   }
 
   return (
-    <div>
+    <div className={wrapperClassName}>
       {label}
       <InputGroup>
         <Input

@@ -6,7 +6,7 @@ import FormControl from 'rsuite/esm/FormControl';
 import CreativeIcon from '@rsuite/icons/Creative';
 import { SchemaModel, StringType } from 'schema-typed';
 import firebase from 'firebase/app';
-import { database } from "../misc/firebase"
+import { auth, database } from "../misc/firebase"
 import { toggleToasterPush, useModalState } from '../helpers/custom-hooks';
 
 const Textarea = React.forwardRef((props, ref) => <Input {...props} as="textarea" ref={ref} />);
@@ -44,6 +44,9 @@ const CreateRoomBtnModal = () => {
     const newRoomData = {
       ...formValue,
       createdAt: firebase.database.ServerValue.TIMESTAMP,
+      admins: {
+        [auth.currentUser.uid]: true
+      }
     };
 
     // update state and database process

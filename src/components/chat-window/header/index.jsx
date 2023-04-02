@@ -4,11 +4,18 @@ import { useCurrentRoom } from '../../../context/current-room-context';
 import { useMediaQuery } from '../../../helpers/custom-hooks';
 import { Link } from 'react-router-dom';
 import RoomInfoBtnModal from './RoomInfoBtnModal';
-import { Button, ButtonToolbar } from 'rsuite';
+import { ButtonToolbar } from 'rsuite';
+import EditRoomBtnDrawer from './EditRoomBtnDrawer';
 
 const ChatTop = () => {
   const name = useCurrentRoom(state => state.name);
+  const description = useCurrentRoom(state => state.description);
+  const isAdmin = useCurrentRoom(state => state.isAdmin);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const briefDesc =
+    description.length > 25
+      ? description.replace(/^(.{1,20})[\s\S]*/, '$1') + '...'
+      : description;
 
   return (
     <div>
@@ -32,12 +39,12 @@ const ChatTop = () => {
         </h4>
 
         <ButtonToolbar className="ws-nowrap">
-          <Button>todo</Button>
+          {isAdmin && <EditRoomBtnDrawer />}
         </ButtonToolbar>
       </div>
 
       <div className="d-flex justify-content-between align-items-center">
-        <span>todo</span>
+        <span>{briefDesc}</span>
         <RoomInfoBtnModal />
       </div>
     </div>
