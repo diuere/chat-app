@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { toggleToasterPush } from '../../../helpers/custom-hooks';
 import { transformToArrayWithId } from '../../../helpers/utils';
 import { database } from '../../../misc/firebase';
 import MessageItem from './MessageItem';
@@ -26,6 +27,31 @@ const ChatMessages = () => {
     };
   }, [chatId]);
 
+  const handleAdmin = useCallback(
+    async uid => {
+      const adminsRef = database.ref(`/rooms/${chatId}/admins`);
+      let alertMsg;
+
+      await adminsRef.transaction(admins => {
+        if (admins) {
+          if (admins[uid]) {
+            // if the user is already an admin, revoke the permission
+            admins[uid] = null;
+            alertMsg = "Admin permission removed";
+          } else {
+            // else, give the permission
+            admins[uid] = true;
+            alertMsg = "Admin permission granted";
+          } 
+        }
+        return admins;
+      });
+
+      toggleToasterPush("info", "Info", `${alertMsg}`, "topCenter", 2000);
+    },
+    [chatId]
+  );
+
   // declaring the conditions for rendering
   const isChatEmpty = messages && messages.length === 0;
   const canShowMessages = messages && messages.length > 0;
@@ -33,7 +59,8 @@ const ChatMessages = () => {
   return (
     <ul className="msg-list custom-scroll">
       {isChatEmpty && <li>No messages yet</li>}
-      {canShowMessages && messages.map(msg => <MessageItem key={msg.id} message={msg} />)}
+      {canShowMessages &&
+        messages.map(msg => <MessageItem key={msg.id} message={msg} handleAdmin={handleAdmin} />)}
     </ul>
   );
 };

@@ -30,6 +30,14 @@ const EditRoomBtnDrawer = () => {
       });
   };
 
+  const deleteRoom = async () => {
+    const userConfirm = window.confirm('Are you sure you want to delete this room? This action cannot be undone');
+    
+    if(userConfirm){
+      await database.ref(`/rooms/${chatId}`).remove();
+    }
+  }
+
   const onNameSave = newName => {
     updateData('name', newName);
   };
@@ -61,12 +69,13 @@ const EditRoomBtnDrawer = () => {
             emptyMsg="Description cannot be empty"
             wrapperClassName="mt-3"
           />
+
+          <Drawer.Actions className='mt-3'>
+            <Button block appearance="primary" color="red" onClick={deleteRoom}>
+              Delete Room
+            </Button>
+          </Drawer.Actions>
         </Drawer.Body>
-        <Drawer.Actions>
-          <Button block appearance="primary" onClick={close}>
-            Close
-          </Button>
-        </Drawer.Actions>
       </Drawer>
     </>
   );
