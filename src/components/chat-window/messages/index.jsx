@@ -17,13 +17,15 @@ const ChatMessages = () => {
       .orderByChild('roomId')
       .equalTo(chatId)
       .on('value', snap => {
-        const data = transformToArrayWithId(snap.val());
-
-        setMessages(data);
+        if(snap.val()) {
+          const data = transformToArrayWithId(snap.val());
+          setMessages(data)
+        }
       });
 
     return () => {
       messagesRef.off('value');
+      setMessages(null);
     };
   }, [chatId]);
 
@@ -53,7 +55,7 @@ const ChatMessages = () => {
   );
 
   // declaring the conditions for rendering
-  const isChatEmpty = messages && messages.length === 0;
+  const isChatEmpty = !messages ||  messages.length === 0;
   const canShowMessages = messages && messages.length > 0;
 
   return (

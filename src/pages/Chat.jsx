@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { Loader } from 'rsuite';
+import BackToHomeBtn from '../components/BackToHomeBtn';
 import ChatBottom from '../components/chat-window/footer';
 import ChatTop from '../components/chat-window/header';
 import ChatMessages from '../components/chat-window/messages';
@@ -19,7 +20,12 @@ const Chat = () => {
   const currentRoom = rooms.find(r => r.id === chatId);
 
   if (!currentRoom) {
-    return <h6 className="text-center mt-page">Chat {chatId} not found</h6>;
+    return (
+      <div>
+        <BackToHomeBtn />
+        <h6 className="text-center mt-page">Chat {chatId} not found</h6>;
+      </div>
+    )
   }
 
   const { name, description } = currentRoom;

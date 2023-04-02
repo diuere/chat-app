@@ -8,6 +8,7 @@
     },
     "rooms": {
       ".read": "auth !== null",
+      ".write": "auth !== null",
       "$room_id": {
         ".read": "auth !== null",
         ".write": "!data.exists() || data.child('admins').child(auth.uid).val() == true"

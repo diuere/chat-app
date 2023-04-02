@@ -7,12 +7,12 @@ import { useMediaQuery } from '../helpers/custom-hooks';
 
 const Home = () => {
   const { profile, isLoading, navigate } = useProfile();
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const match = useMatch('/');
 
   const isExact = match && match.pathname === '/'; // checking if the home page is being displayed
 
-  const canRenderSidebar = !isMobile || isExact; // shall be used to determine if the sidebar should appear or not
+  const canRenderSidebar = isDesktop || isExact; // shall be used to determine if the sidebar should appear or not
 
   if (!profile && isLoading) {
     return (
@@ -35,8 +35,8 @@ const Home = () => {
               <Sidebar />
             </Col>
           )}
-          <Col xs={24} md={16} className="h-100">
-            {!isMobile && isExact ? (
+          <Col xs={24} md={16} className={!isExact ? "h-100" : ""}>
+            {isDesktop && isExact ? (
               <h6 className="text-center mt-page">Please select chat</h6>
             ) : (
               <Outlet />
