@@ -54,6 +54,37 @@ const ChatMessages = () => {
     [chatId]
   );
 
+  const handleMsgDelete = useCallback(async (messageId) => {
+    const confirm = window.confirm(`Are you sure you want to delete this message?`);
+    if (!confirm) return;
+
+    // creating a new messages object for the database update
+    const updates = {};
+
+    updates[`/messages/${messageId}`] = null; // removing the message selected from it
+
+    // determining if the message selected is also the last message sent to the chat
+    const isLast = messages[messages.length - 1].id === messageId;  
+
+    if (isLast) {
+      if (messages.length > 1){
+        // reassigning the last message to its predecessor
+        updates[`/rooms/${chatId}/lastMessage`] = { 
+          ...messages[messages.length - 2],
+          msgId: messages[messages.length - 2].id
+        };
+      } else {
+        updates[`/rooms/${chatId}/lastMessage`] = null;
+      }
+    }
+
+    try {
+      await database.ref().update(updates);
+    } catch (error) {
+      toggleToasterPush("error", "Error", `${error.message}`, "topCenter", 4000);
+    }
+  }, [chatId, messages])
+
   // declaring the conditions for rendering
   const isChatEmpty = !messages ||  messages.length === 0;
   const canShowMessages = messages && messages.length > 0;
@@ -62,7 +93,7 @@ const ChatMessages = () => {
     <ul className="msg-list custom-scroll">
       {isChatEmpty && <li>No messages yet</li>}
       {canShowMessages &&
-        messages.map(msg => <MessageItem key={msg.id} message={msg} handleAdmin={handleAdmin} />)}
+        messages.map(msg => <MessageItem key={msg.id} message={msg} handleAdmin={handleAdmin} handleMsgDelete={handleMsgDelete} />)}
     </ul>
   );
 };

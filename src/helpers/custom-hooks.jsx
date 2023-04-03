@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Notification, toaster } from 'rsuite';
 import { database } from '../misc/firebase';
+import { useRef } from 'react';
 
 export const useModalState = (defaultVal = false) => {
   // shall determine the dashboard brawer open state
@@ -81,4 +82,27 @@ export const usePresence = uid => {
   }, [uid]);
 
   return presence;
+};
+
+export const useHover = () => {
+  const [value, setValue] = useState(false);
+  const ref = useRef(null);
+  const handleMouseOver = () => setValue(true);
+  const handleMouseOut = () => setValue(false);
+  useEffect(
+    () => {
+      const node = ref.current;
+      if (node) {
+        node.addEventListener('mouseover', handleMouseOver);
+        node.addEventListener('mouseout', handleMouseOut);
+      }
+      return () => {
+        node.removeEventListener('mouseover', handleMouseOver);
+        node.removeEventListener('mouseout', handleMouseOut);
+      };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ref.current] // Recall only if ref changes
+  );
+  return [ref, value];
 };
