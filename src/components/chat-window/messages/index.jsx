@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toggleToasterPush } from '../../../helpers/custom-hooks';
 import { transformToArrayWithId } from '../../../helpers/utils';
-import { database } from '../../../misc/firebase';
+import { database, storage } from '../../../misc/firebase';
 import MessageItem from './MessageItem';
 
 const ChatMessages = () => {
@@ -54,7 +54,7 @@ const ChatMessages = () => {
     [chatId]
   );
 
-  const handleMsgDelete = useCallback(async (messageId) => {
+  const handleMsgDelete = useCallback(async (messageId, file) => {
     const confirm = window.confirm(`Are you sure you want to delete this message?`);
     if (!confirm) return;
 
@@ -82,6 +82,17 @@ const ChatMessages = () => {
       await database.ref().update(updates);
     } catch (error) {
       toggleToasterPush("error", "Error", `${error.message}`, "topCenter", 4000);
+      return;
+    }
+
+    // handling the delete of files on the firebase storage
+    if (file) {
+      try {
+        const fileRef = storage.refFromURL(file.url);
+        fileRef.delete();
+      } catch (error) {
+        toggleToasterPush("error", "Error", `${error.message}`, "topCenter", 4000);
+      }
     }
   }, [chatId, messages])
 

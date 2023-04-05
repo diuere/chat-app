@@ -101,7 +101,7 @@ const MessageItem = ({ message, handleAdmin, handleMsgDelete }) => {
               isVisible={chanShowIcons}
               iconName="close"
               tooltip={'Delete message'}
-              onClick={() => handleMsgDelete(message.id)}
+              onClick={() => handleMsgDelete(message.id, file)}
             />
           )}
         </div>
