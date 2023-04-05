@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 import { useProfile } from '../../../context/profile-context';
 import { database } from '../../../misc/firebase';
 import { toggleToasterPush } from '../../../helpers/custom-hooks';
+import AttachmentBtnModal from './AttachmentBtnModal';
 
 function assembleMessage(profile, chatId) {
   // shall attach common properties to the messages
@@ -44,10 +45,10 @@ const ChatBottom = () => {
     const messagesId = database.ref("messages").push().key; // getting an unique key from the realtime database
 
     updates[`/messages/${messagesId}`] = msgData;
-    updates[`/rooms/${chatId}/lastMessage`] = {
+    updates[`/rooms/${chatId}/lastMessage`] = { // handling last message update
       ...msgData,
       msgId: messagesId,
-    }
+    };
 
     setIsLoading(true);
     try {
@@ -58,7 +59,6 @@ const ChatBottom = () => {
     } catch (error) {
       toggleToasterPush('error', 'Error', `${error.message}`, 'topCenter', 4000);
       setIsLoading(false);
-      
     }
   };
   
@@ -69,9 +69,40 @@ const ChatBottom = () => {
     }
   }
 
+  const afterUpload = useCallback(async (files) => {
+    setIsLoading(true);
+
+    const updates = {};
+
+    files.forEach((file) => {
+      const msgData = assembleMessage(profile, chatId); // getting the proper chat object
+      msgData.file = file; // attaching the file
+      const messagesId = database.ref("messages").push().key; // getting an unique key from the realtime database
+
+      updates[`/messages/${messagesId}`] = msgData;
+    });
+
+    // getting the last message id
+    const lastMsgId = Object.keys(updates).pop();
+    updates[`/rooms/${chatId}/lastMessage`] = { // handling last message update
+      ...updates[lastMsgId],
+      msgId: lastMsgId,
+    }
+
+    try {
+      await database.ref().update(updates);
+      
+      setIsLoading(false);
+    } catch (error) {
+      toggleToasterPush('error', 'Error', `${error.message}`, 'topCenter', 4000);
+      setIsLoading(false);
+    }
+  }, [chatId, profile]);
+
   return (
     <div>
       <InputGroup>
+        <AttachmentBtnModal afterUpload={afterUpload}/>
         <Input
           placeholder="Write a new message here..."
           value={input}

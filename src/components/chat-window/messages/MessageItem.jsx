@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import TimeAgo from 'react-timeago';
-import { Button } from 'rsuite';
+import { Button, Tooltip, Whisper } from 'rsuite';
 import { useCurrentRoom } from '../../../context/current-room-context';
 import { auth } from '../../../misc/firebase';
 import ProfileAvatar from '../../dashboard/ProfileAvatar';
@@ -8,9 +8,47 @@ import PresenceDot from '../../PresenceDot';
 import ProfileInfoBtnModal from './ProfileInfoBtnModal';
 import { useHover, useMediaQuery } from '../../../helpers/custom-hooks';
 import IconBtnControl from './IconBtnControl';
+import ImgBtnModal from './ImgBtnModal';
+import { Icon } from '@iconify/react';
+
+const renderFileMessage = file => {
+  // handling image files
+  if (file.contentType.includes('image')) {
+    return (
+      <div className="height-220">
+        <ImgBtnModal src={file.url} fileName={file.name} />
+      </div>
+    );
+  }
+  return (
+    <Whisper
+      placement="top"
+      delay={0}
+      delayClose={0}
+      delayOpen={0}
+      trigger={'hover'}
+      speaker={<Tooltip>Download</Tooltip>}
+    >
+      <a
+        href={file.url}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex align-items-center"
+      >
+        <Icon
+          icon="mdi:download-circle"
+          width="24"
+          height="24"
+          className="child"
+        />
+        <span className="child">{file.name}</span>
+      </a>
+    </Whisper>
+  );
+};
 
 const MessageItem = ({ message, handleAdmin, handleMsgDelete }) => {
-  const { author, createdAt, text } = message;
+  const { author, createdAt, text, file } = message;
   const isAdmin = useCurrentRoom(state => state.isAdmin);
   const admins = useCurrentRoom(state => state.admins);
   const isMobile = useMediaQuery('(max-width: 768px');
@@ -51,22 +89,26 @@ const MessageItem = ({ message, handleAdmin, handleMsgDelete }) => {
               </Button>
             )}
           </ProfileInfoBtnModal>
-          <TimeAgo date={createdAt} className="font-normal text-black-45 ml-2" />
+          <TimeAgo
+            date={createdAt}
+            className="font-normal text-black-45 ml-2"
+          />
         </div>
 
         <div className="mr-3">
           {isAuthor && (
-            <IconBtnControl 
+            <IconBtnControl
               isVisible={chanShowIcons}
               iconName="close"
-              tooltip={"Delete message"}
+              tooltip={'Delete message'}
               onClick={() => handleMsgDelete(message.id)}
             />
           )}
         </div>
       </div>
       <div className="ml-3">
-        <span className="word-break-all">{text}</span>
+        {text && <span className="word-break-all">{text}</span>}
+        {file && renderFileMessage(file)}
       </div>
     </li>
   );
