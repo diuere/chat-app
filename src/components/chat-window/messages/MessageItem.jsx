@@ -20,6 +20,16 @@ const renderFileMessage = file => {
       </div>
     );
   }
+  // handling audio files
+  if(file.contentType.includes('audio')) {
+    return (
+      <audio controls>
+        <source src={file.url} type="audio/mp3"/>
+        Your browser does not support the audio element.
+      </audio>
+    )
+  }
+
   return (
     <Whisper
       placement="top"

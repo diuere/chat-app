@@ -89,7 +89,7 @@ const ChatMessages = () => {
     if (file) {
       try {
         const fileRef = storage.refFromURL(file.url);
-        fileRef.delete();
+        await fileRef.delete();
       } catch (error) {
         toggleToasterPush("error", "Error", `${error.message}`, "topCenter", 4000);
       }
