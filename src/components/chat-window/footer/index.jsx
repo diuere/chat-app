@@ -1,12 +1,14 @@
-import { useState, useCallback } from 'react';
-import firebase from "firebase/app";
+import { useState, useCallback, useRef } from 'react';
+import RecordRTC from 'recordrtc';
+import firebase from 'firebase/app';
 import { InputGroup, Input } from 'rsuite';
 import { Icon } from '@iconify/react';
 import { useParams } from 'react-router-dom';
 import { useProfile } from '../../../context/profile-context';
-import { database } from '../../../misc/firebase';
+import { database, storage } from '../../../misc/firebase';
 import { toggleToasterPush } from '../../../helpers/custom-hooks';
 import AttachmentBtnModal from './AttachmentBtnModal';
+import AudioMsgBtn from './AudioMsgBtn';
 
 function assembleMessage(profile, chatId) {
   // shall attach common properties to the messages
@@ -16,24 +18,29 @@ function assembleMessage(profile, chatId) {
       name: profile.name,
       uid: profile.uid,
       createdAt: profile.createdAt,
-      ...(profile.avatar ? {avatar: profile.avatar} : {}), 
+      ...(profile.avatar ? { avatar: profile.avatar } : {}),
     },
-    createdAt: firebase.database.ServerValue.TIMESTAMP
-  }
+    createdAt: firebase.database.ServerValue.TIMESTAMP,
+  };
 }
 
 const ChatBottom = () => {
+  // states for text input handling
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { profile } = useProfile();
   const { chatId } = useParams();
+  // states for audio upload handling
+  const [recording, setRecording] = useState(false);
+  const [audioURL, setAudioURL] = useState(null);
+  const recorderRef = useRef(null);
 
   const onInputChange = useCallback(value => {
     setInput(value);
   }, []);
 
   const onSendClick = async () => {
-    if(input.trim() === ""){
+    if (input.trim() === '') {
       return;
     }
 
@@ -42,10 +49,11 @@ const ChatBottom = () => {
 
     const updates = {};
 
-    const messagesId = database.ref("messages").push().key; // getting an unique key from the realtime database
+    const messagesId = database.ref('messages').push().key; // getting an unique key from the realtime database
 
     updates[`/messages/${messagesId}`] = msgData;
-    updates[`/rooms/${chatId}/lastMessage`] = { // handling last message update
+    updates[`/rooms/${chatId}/lastMessage`] = {
+      // handling last message update
       ...msgData,
       msgId: messagesId,
     };
@@ -53,70 +61,192 @@ const ChatBottom = () => {
     setIsLoading(true);
     try {
       await database.ref().update(updates);
-      
+
       setIsLoading(false);
       setInput('');
     } catch (error) {
-      toggleToasterPush('error', 'Error', `${error.message}`, 'topCenter', 4000);
+      toggleToasterPush(
+        'error',
+        'Error',
+        `${error.message}`,
+        'topCenter',
+        4000
+      );
       setIsLoading(false);
     }
   };
-  
-  const onKeyDownHandler = (e) => { 
-    if(e.keyCode === 13){
+
+  // handle send message on Enter key press
+  const onKeyDownHandler = e => {
+    if (e.keyCode === 13) {
       e.preventDefault();
       onSendClick();
     }
-  }
+  };
 
-  const afterUpload = useCallback(async (files) => {
-    setIsLoading(true);
+  // function for file upload operation
+  const afterUpload = useCallback(
+    async files => {
+      setIsLoading(true);
 
-    const updates = {};
+      const updates = {};
 
-    files.forEach((file) => {
-      const msgData = assembleMessage(profile, chatId); // getting the proper chat object
-      msgData.file = file; // attaching the file
-      const messagesId = database.ref("messages").push().key; // getting an unique key from the realtime database
+      files.forEach(file => {
+        const msgData = assembleMessage(profile, chatId); // getting the proper chat object
+        msgData.file = file; // attaching the file
+        const messagesId = database.ref('messages').push().key; // getting an unique key from the realtime database
 
-      updates[`/messages/${messagesId}`] = msgData;
+        updates[`/messages/${messagesId}`] = msgData;
+      });
+
+      // getting the last message id
+      const lastMsgId = Object.keys(updates).pop();
+      updates[`/rooms/${chatId}/lastMessage`] = {
+        // handling last message update
+        ...updates[lastMsgId],
+        msgId: lastMsgId,
+      };
+
+      try {
+        await database.ref().update(updates);
+
+        setIsLoading(false);
+      } catch (error) {
+        toggleToasterPush(
+          'error',
+          'Error',
+          `${error.message}`,
+          'topCenter',
+          4000
+        );
+        setIsLoading(false);
+      }
+    },
+    [chatId, profile]
+  );
+
+  // functions for audio recording operation
+  const startRecording = () => {
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then(stream => {
+        const recorder = RecordRTC(stream, {
+          type: 'audio',
+          mimeType: 'audio/mp3',
+          sampleRate: 44100,
+          desiredSampRate: 16000,
+          recorderType: RecordRTC.StereoAudioRecorder,
+          numberOfAudioChannels: 1,
+        });
+        recorder.startRecording();
+        recorderRef.current = recorder;
+        setRecording(true);
+      })
+      .catch(error => console.log(error));
+  };
+
+  const stopRecording = () => {
+    recorderRef.current.stopRecording(() => {
+      const blob = recorderRef.current.getBlob();
+      const url = URL.createObjectURL(blob);
+      setAudioURL(url);
+      setRecording(false);
     });
+  };
 
-    // getting the last message id
-    const lastMsgId = Object.keys(updates).pop();
-    updates[`/rooms/${chatId}/lastMessage`] = { // handling last message update
-      ...updates[lastMsgId],
-      msgId: lastMsgId,
-    }
-
+  const onAudioUpload = useCallback(async () => {
+    setIsLoading(true);
     try {
-      await database.ref().update(updates);
-      
-      setIsLoading(false);
+      const audioBlob = recorderRef.current.getBlob();
+      const uploadTask = storage
+        .ref(`/chat/${chatId}`)
+        .child(`audio_${Date.now()}.mp3`)
+        .put(audioBlob, {
+          cacheControl: `public, max-age=${3600 * 24 * 3}`,
+        });
+
+      // Wait for the upload to complete before accessing metadata
+      uploadTask.on(
+        'state_changed',
+        snapshot => {
+          const progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload is ${progress}% done`);
+        },
+        error => {
+          setIsLoading(false);
+          toggleToasterPush(
+            'error',
+            'Error',
+            `${error.message}`,
+            'topCenter',
+            4000
+          );
+        },
+        async () => {
+          const snap = await uploadTask.snapshot.ref.getMetadata();
+
+          // file for the database
+          const file = {
+            contentType: snap.contentType,
+            name: snap.name,
+            url: await uploadTask.snapshot.ref.getDownloadURL(),
+          };
+
+          setIsLoading(false);
+          afterUpload([file]);
+          setAudioURL(null);
+        }
+      );
     } catch (error) {
-      toggleToasterPush('error', 'Error', `${error.message}`, 'topCenter', 4000);
       setIsLoading(false);
+      toggleToasterPush(
+        'error',
+        'Error',
+        `${error.message}`,
+        'topCenter',
+        4000
+      );
     }
-  }, [chatId, profile]);
+  }, [chatId, afterUpload]);
+
+  const cancelAudioUpload = () => {
+    setAudioURL(null);
+  };
 
   return (
     <div>
       <InputGroup>
-        <AttachmentBtnModal afterUpload={afterUpload}/>
-        <Input
-          placeholder="Write a new message here..."
-          value={input}
-          onChange={onInputChange}
-          onKeyDown={onKeyDownHandler}
-        />
-        <InputGroup.Button
-          color="blue"
-          appearance="primary"
-          onClick={onSendClick}
-          disabled={isLoading}
-        >
-          <Icon icon="material-symbols:send" width="24" height="24" />
-        </InputGroup.Button>
+        {!audioURL && <AttachmentBtnModal afterUpload={afterUpload} />}
+        {!audioURL && (
+          <Input
+            placeholder="Write a new message here..."
+            value={input}
+            onChange={onInputChange}
+            onKeyDown={onKeyDownHandler}
+          />
+        )}
+        {input.length > 0 && (
+          <InputGroup.Button
+            color="blue"
+            appearance="primary"
+            onClick={onSendClick}
+            disabled={isLoading}
+          >
+            <Icon icon="material-symbols:send" width="24" height="24" />
+          </InputGroup.Button>
+        )}
+        {input.length < 1 && (
+          <AudioMsgBtn
+            recording={recording}
+            audioURL={audioURL}
+            startRecording={startRecording}
+            stopRecording={stopRecording}
+            onAudioUpload={onAudioUpload}
+            isLoading={isLoading}
+            cancelAudioUpload={cancelAudioUpload}
+          />
+        )}
       </InputGroup>
     </div>
   );
