@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toggleToasterPush } from '../../../helpers/custom-hooks';
 import { groupByDate, transformToArrayWithId } from '../../../helpers/utils';
@@ -8,6 +8,12 @@ import MessageItem from './MessageItem';
 const ChatMessages = () => {
   const [messages, setMessages] = useState(null);
   const { chatId } = useParams();
+  const selfRef = useRef();
+
+  const scrollToBottom = () => {
+    const scrollHeight = selfRef.current.scrollHeight;
+    selfRef.current.scrollTop = scrollHeight;
+  };
 
   useEffect(() => {
     const messagesRef = database.ref('/messages');
@@ -28,6 +34,10 @@ const ChatMessages = () => {
       setMessages(null);
     };
   }, [chatId]);
+
+  useLayoutEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const handleAdmin = useCallback(
     async uid => {
@@ -107,7 +117,7 @@ const ChatMessages = () => {
 
   const renderMessages = () => {
     const groups = groupByDate(messages);
-    
+
     const items = [];
 
     // loop over every data and
@@ -135,7 +145,7 @@ const ChatMessages = () => {
   };
 
   return (
-    <ul className="msg-list custom-scroll">
+    <ul ref={selfRef} className="msg-list custom-scroll">
       {isChatEmpty && <li>No messages yet</li>}
       {canShowMessages && renderMessages()}
     </ul>
